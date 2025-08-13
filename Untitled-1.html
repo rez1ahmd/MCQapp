@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI MCQ Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .question-card {
+            background-color: white;
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        #ai-generator {
+            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .admin-badge {
+            background-color: #f72585;
+            color: white;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        
+        /* Three.js animation container */
+        #animation-container {
+            width: 100%;
+            height: 200px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-brain me-2"></i>AI MCQ Maker
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-home me-1"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#generator"><i class="fas fa-robot me-1"></i> Generator</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#my-questions"><i class="fas fa-book me-1"></i> My Questions</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <div id="user-info" class="me-3 d-none">
+                        <span id="username-display" class="fw-bold"></span>
+                        <span id="admin-badge" class="admin-badge ms-2 d-none">Admin</span>
+                    </div>
+                    <button id="auth-btn" class="btn btn-outline-primary">
+                        <i class="fas fa-sign-in-alt me-1"></i> Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <!-- Hero Section -->
+        <div class="row align-items-center mb-5">
+            <div class="col-md-6">
+                <h1 class="display-4 fw-bold mb-3">AI-Powered MCQ Generator</h1>
+                <p class="lead mb-4">Create high-quality multiple choice questions instantly with artificial intelligence. Perfect for educators, students, and content creators.</p>
+                <a href="#generator" class="btn btn-primary btn-lg px-4">
+                    <i class="fas fa-bolt me-2"></i>Try Now
+                </a>
+            </div>
+            <div class="col-md-6">
+                <div id="animation-container"></div>
+            </div>
+        </div>
+
+        <!-- AI Generator Section -->
+        <section id="generator" class="mb-5 p-4">
+            <h2 class="mb-4"><i class="fas fa-robot me-2"></i>Question Generator</h2>
+            <div class="card p-4" id="ai-generator">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="subject" class="form-label text-white">Subject/Topic</label>
+                            <input type="text" class="form-control" id="subject" placeholder="e.g. Biology, World War II, JavaScript">
+                        </div>
+                        <div class="mb-3">
+                            <label for="difficulty" class="form-label text-white">Difficulty Level</label>
+                            <select class="form-select" id="difficulty">
+                                <option value="easy">Easy</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="question-type" class="form-label text-white">Question Type</label>
+                            <select class="form-select" id="question-type">
+                                <option value="fact">Fact-based</option>
+                                <option value="concept" selected>Conceptual</option>
+                                <option value="application">Application</option>
+                                <option value="analysis">Analysis</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="question-count" class="form-label text-white">Number of Questions</label>
+                            <input type="number" class="form-control" id="question-count" min="1" max="10" value="3">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="additional-context" class="form-label text-white">Additional Context (Optional)</label>
+                    <textarea class="form-control" id="additional-context" rows="2" placeholder="Any specific details or context for the questions..."></textarea>
+                </div>
+                <button id="generate-btn" class="btn btn-light mt-2">
+                    <i class="fas fa-magic me-2"></i>Generate Questions
+                </button>
+                <div class="loader mx-auto mt-3"></div>
+            </div>
+
+            <div id="results-container" class="mt-4 d-none">
+                <h4 class="mb-3">Generated Questions</h4>
+                <div id="questions-list" class="row"></div>
+                <div class="d-flex justify-content-end mt-3">
+                    <button id="save-all-btn" class="btn btn-success me-2">
+                        <i class="fas fa-save me-1"></i>Save All
+                    </button>
+                    <button id="regenerate-btn" class="btn btn-warning">
+                        <i class="fas fa-sync-alt me-1"></i>Regenerate
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- My Questions Section -->
+        <section id="my-questions" class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-book me-2"></i>My Question Bank</h2>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="filter-dropdown" data-bs-toggle="dropdown">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item filter-option" href="#" data-filter="all">All Questions</a></li>
+                        <li><a class="dropdown-item filter-option" href="#" data-filter="saved">Saved</a></li>
+                        <li><a class="dropdown-item filter-option" href="#" data-filter="generated">Generated</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item filter-option" href="#" data-filter="easy">Easy</a></li>
+                        <li><a class="dropdown-item filter-option" href="#" data-filter="medium">Medium</a></li>
+                        <li><a class="dropdown-item filter-option" href="#" data-filter="hard">Hard</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div id="question-bank-container" class="row">
+                <!-- Questions will be loaded here -->
+            </div>
+            <div id="empty-message" class="text-center py-5">
+                <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
+                <h4 class="text-muted">No questions yet</h4>
+                <p>Generate some questions to see them here</p>
+            </div>
+        </section>
+
+        <!-- Admin Panel (Visible only to admins) -->
+        <section id="admin-panel" class="mb-5 d-none">
+            <h2 class="mb-4"><i class="fas fa-lock me-2"></i>Admin Panel</h2>
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#admin-questions" data-bs-toggle="tab">Questions</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#admin-users" data-bs-toggle="tab">Users</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#admin-categories" data-bs-toggle="tab">Categories</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#admin-analytics" data-bs-toggle="tab">Analytics</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="admin-questions">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Question</th>
+                                            <th>Category</th>
+                                            <th>Difficulty</th>
+                                            <th>Created By</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-questions-table">
+                                        <!-- Admin questions will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="admin-users">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Joined</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-users-table">
+                                        <!-- Users will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="admin-categories">
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5>Manage Categories</h5>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                    <i class="fas fa-plus me-1"></i>Add Category
+                                </button>
+                            </div>
+                            <div class="row" id="categories-container">
+                                <!-- Categories will be loaded here -->
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="admin-analytics">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-info text-white">
+                                            <h5 class="mb-0">Questions Overview</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="questionsChart" height="200"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-success text-white">
+                                            <h5 class="mb-0">User Activity</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="usersChart" height="200"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Add Category Modal (Admin only) -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="category-name" class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="category-name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="category-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="category-description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="save-category-btn">Save Category</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Preview Modal -->
+    <div class="modal fade" id="questionPreviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Question Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="question-preview-content">
+                    <!-- Question content will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="save-question-btn">Save Question</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="auth-modal-title">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3" id="auth-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="login-tab" data-bs-toggle="tab" href="#login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="register-tab" data-bs-toggle="tab" href="#register">Register</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="auth-tabs-content">
+                        <div class="tab-pane fade show active" id="login">
+                            <div class="mb-3">
+                                <label for="login-email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="login-email">
+                            </div>
+                            <div class="mb-3">
+                                <label for="login-password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="login-password">
+                            </div>
+                            <button id="login-btn" class="btn btn-primary w-100">Login</button>
+                            <div class="text-center mt-3">
+                                <button id="google-login-btn" class="btn btn-outline-danger">
+                                    <i class="fab fa-google me-2"></i>Login with Google
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="register">
+                            <div class="mb-3">
+                                <label for="register-name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="register-name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="register-email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="register-email">
+                            </div>
+                            <div class="mb-3">
+                                <label for="register-password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="register-password">
+                            </div>
+                            <div class="mb-3">
+                                <label for="register-confirm-password" class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" id="register-confirm-password">
+                            </div>
+                            <button id="register-btn" class="btn btn-primary w-100">Register</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase and other JS libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Main App Script -->
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDDaUb7nqriLCJFcFRU2fUwibpfRA30zyU",
+            authDomain: "mcqapp-dc8f4.firebaseapp.com",
+            projectId: "mcqapp-dc8f4",
+            storageBucket: "mcqapp-dc8f4.firebasestorage.app",
+            messagingSenderId: "187522918296",
+            appId: "1:187522918296:web:062c1ac9480bfadffd2ded",
+            measurementId: "G-RGCGZP0217" 
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Google Auth Provider
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        // DOM Elements
+        const authBtn = document.getElementById('auth-btn');
+        const userInfo = document.getElementById('user-info');
+        const usernameDisplay = document.getElementById('username-display');
+        const adminBadge = document.getElementById('admin-badge');
+        const adminPanel = document.getElementById('admin-panel');
+        const generateBtn = document.getElementById('generate-btn');
+        const resultsContainer = document.getElementById('results-container');
+        const questionsList = document.getElementById('questions-list');
+        const loader = document.querySelector('.loader');
+        const questionBankContainer = document.getElementById('question-bank-container');
+        const emptyMessage = document.getElementById('empty-message');
+        const saveAllBtn = document.getElementById('save-all-btn');
+        const regenerateBtn = document.getElementById('regenerate-btn');
+        const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        const saveCategoryBtn = document.getElementById('save-category-btn');
+        const saveQuestionBtn = document.getElementById('save-question-btn');
+
+        // Animation setup
+        const animationContainer = document.getElementById('animation-container');
+        let animationScene, animationCamera, animationRenderer, animationCube;
+
+        // Initialize Three.js animation
+        function initAnimation() {
+            // Set up the scene
+            animationScene = new THREE.Scene();
+            animationCamera = new THREE.PerspectiveCamera(75, animationContainer.clientWidth / 200, 0.1, 1000);
+            animationRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            animationRenderer.setSize(animationContainer.clientWidth, 200);
+            animationContainer.appendChild(animationRenderer.domElement);
+
+            // Create a cube with question mark texture
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const materials = [];
+            
+            // Create question mark texture for each face
+            for (let i = 0; i < 6; i++) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 256;
+                const context = canvas.getContext('2d');
+                context.fillStyle = '#4361ee';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.font = '180px Arial';
+                context.fillStyle = 'white';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                context.fillText('?', canvas.width/2, canvas.height/2);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                materials.push(new THREE.MeshBasicMaterial({ map: texture }));
+            }
+
+            animationCube = new THREE.Mesh(geometry, materials);
+            animationScene.add(animationCube);
+
+            animationCamera.position.z = 3;
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                animationCube.rotation.x += 0.01;
+                animationCube.rotation.y += 0.01;
+                animationRenderer.render(animationScene, animationCamera);
+            }
+
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                animationCamera.aspect = animationContainer.clientWidth / 200;
+                animationCamera.updateProjectionMatrix();
+                animationRenderer.setSize(animationContainer.clientWidth, 200);
+            });
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            initAnimation();
+            initAuth();
+            setupEventListeners();
+            checkAuthState();
+        });
+
+        // Authentication functions
+        function initAuth() {
+            authBtn.addEventListener('click', () => {
+                if (auth.currentUser) {
+                    // User is logged in, show logout option
+                    if (confirm('Are you sure you want to logout?')) {
+                        auth.signOut();
+                    }
+                } else {
+                    // User is not logged in, show auth modal
+                    authModal.show();
+                }
+            });
+
+            loginBtn.addEventListener('click', handleLogin);
+            registerBtn.addEventListener('click', handleRegister);
+            googleLoginBtn.addEventListener('click', handleGoogleLogin);
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    authModal.hide();
+                })
+                .catch(error => {
+                    alert('Login failed: ' + error.message);
+                });
+        }
+
+        function handleRegister() {
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+
+            if (!name || !email || !password || !confirmPassword) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Add user to Firestore
+                    return db.collection('users').doc(userCredential.user.uid).set({
+                        name: name,
+                        email: email,
+                        role: 'user',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    authModal.hide();
+                })
+                .catch(error => {
+                    alert('Registration failed: ' + error.message);
+                });
+        }
+
+        function handleGoogleLogin() {
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    
+                    // Check if user exists in Firestore
+                    db.collection('users').doc(user.uid).get()
+                        .then(doc => {
+                            if (!doc.exists) {
+                                // Add new user to Firestore
+                                return db.collection('users').doc(user.uid).set({
+                                    name: user.displayName,
+                                    email: user.email,
+                                    role: 'user',
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+                        })
+                        .then(() => {
+                            authModal.hide();
+                        });
+                })
+                .catch(error => {
+                    alert('Google login failed: ' + error.message);
+                });
+        }
+
+        function checkAuthState() {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    // User is signed in
+                    authBtn.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Logout';
+                    
+                    // Get user data from Firestore
+                    db.collection('users').doc(user.uid).get()
+                        .then(doc => {
+                            if (doc.exists) {
+                                const userData = doc.data();
+                                usernameDisplay.textContent = userData.name;
+                                userInfo.classList.remove('d-none');
+                                
+                                // Check if user is admin
+                                if (userData.role === 'admin') {
+                                    adminBadge.classList.remove('d-none');
+                                    adminPanel.classList.remove('d-none');
+                                    loadAdminData();
+                                } else {
+                                    adminBadge.classList.add('d-none');
+                                    adminPanel.classList.add('d-none');
+                                }
+                                
+                                // Load user's questions
+                                loadUserQuestions(user.uid);
+                            }
+                        });
+                } else {
+                    // User is signed out
+                    authBtn.innerHTML = '<i class="fas fa-sign-in-alt me-1"></i> Login';
+                    userInfo.classList.add('d-none');
+                    adminPanel.classList.add('d-none');
+                    questionBankContainer.innerHTML = '';
+                    emptyMessage.classList.remove('d-none');
+                }
+            });
+        }
+
+        // Question generation functions
+        function setupEventListeners() {
+            generateBtn.addEventListener('click', generateQuestions);
+            saveAllBtn.addEventListener('click', saveAllQuestions);
+            regenerateBtn.addEventListener('click', generateQuestions);
+            
+            // Filter questions
+            document.querySelectorAll('.filter-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const filter = e.target.getAttribute('data-filter');
+                    filterQuestions(filter);
+                });
+            });
+            
+            // Admin functionality
+            if (saveCategoryBtn) {
+                saveCategoryBtn.addEventListener('click', saveCategory);
+            }
+        }
+
+        async function generateQuestions() {
+            const subject = document.getElementById('subject').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const questionType = document.getElementById('question-type').value;
+            const questionCount = document.getElementById('question-count').value;
+            const additionalContext = document.getElementById('additional-context').value;
+
+            if (!subject) {
+                alert('Please enter a subject/topic');
+                return;
+            }
+
+            // Show loader
+            loader.style.display = 'block';
+            generateBtn.disabled = true;
+            questionsList.innerHTML = '';
+            resultsContainer.classList.add('d-none');
+
+            try {
+                // In a real app, you would call your AI API here
+                // For this example, we'll simulate the API call with a timeout
+                // and use some sample questions
+                
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Generate sample questions based on inputs
+                const generatedQuestions = generateSampleQuestions(subject, difficulty, questionType, questionCount, additionalContext);
+                
+                // Display the questions
+                displayGeneratedQuestions(generatedQuestions);
+                
+                // Show results container
+                resultsContainer.classList.remove('d-none');
+            } catch (error) {
+                alert('Error generating questions: ' + error.message);
+            } finally {
+                loader.style.display = 'none';
+                generateBtn.disabled = false;
+            }
+        }
+
+        function generateSampleQuestions(subject, difficulty, questionType, count, context) {
+            const questions = [];
+            const types = {
+                'fact': 'Fact-based',
+                'concept': 'Conceptual',
+                'application': 'Application',
+                'analysis': 'Analysis'
+            };
+            
+            for (let i = 0; i < count; i++) {
+                const questionNumber = i + 1;
+                const options = generateOptions(subject, difficulty, questionType);
+                
+                questions.push({
+                    id: 'temp-' + Date.now() + '-' + i,
+                    question: `Sample ${types[questionType]} question about ${subject} (${difficulty} difficulty): What is the ${questionNumber}${getOrdinalSuffix(questionNumber)} key aspect of ${subject}? ${context ? '(' + context + ')' : ''}`,
+                    options: options,
+                    correctAnswer: options[0], // First option is correct in our sample
+                    explanation: `This is a sample explanation for the ${questionNumber}${getOrdinalSuffix(questionNumber)} question about ${subject}. The correct answer is ${options[0]} because...`,
+                    subject: subject,
+                    difficulty: difficulty,
+                    type: questionType,
+                    context: context,
+                    createdAt: new Date().toISOString()
+                });
+            }
+            
+            return questions;
+        }
+
+        function generateOptions(subject, difficulty, questionType) {
+            const options = [];
+            const correctOption = `Correct option about ${subject}`;
+            options.push(correctOption);
+            
+            // Add incorrect options based on difficulty
+            const incorrectOptions = [
+                `Incorrect option 1 about ${subject}`,
+                `Partially correct but wrong option about ${subject}`,
+                `Completely unrelated option to ${subject}`,
+                `Opposite of correct option about ${subject}`
+            ];
+            
+            // More plausible incorrect options for higher difficulty
+            if (difficulty === 'medium' || difficulty === 'hard') {
+                incorrectOptions.push(`Almost correct but slightly wrong option about ${subject}`);
+                incorrectOptions.push(`Correct for a different ${questionType} question about ${subject}`);
+            }
+            
+            // Shuffle and pick 3 incorrect options
+            const shuffled = incorrectOptions.sort(() => 0.5 - Math.random());
+            options.push(...shuffled.slice(0, 3));
+            
+            // Shuffle all options
+            return options.sort(() => 0.5 - Math.random());
+        }
+
+        function getOrdinalSuffix(num) {
+            const j = num % 10;
+            const k = num % 100;
+            if (j === 1 && k !== 11) {
+                return 'st';
+            }
+            if (j === 2 && k !== 12) {
+                return 'nd';
+            }
+            if (j === 3 && k !== 13) {
+                return 'rd';
+            }
+            return 'th';
+        }
+
+        function displayGeneratedQuestions(questions) {
+            questionsList.innerHTML = '';
+            
+            questions.forEach((q, index) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'col-md-6 mb-3';
+                questionCard.innerHTML = `
+                    <div class="card question-card">
+                        <div class="card-body">
+                            <h5 class="card-title">Question ${index + 1}</h5>
+                            <p class="card-text">${q.question}</p>
+                            <ul class="list-group list-group-flush mb-3">
+                                ${q.options.map(opt => `<li class="list-group-item">${opt}</li>`).join('')}
+                            </ul>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-sm btn-outline-primary preview-question" data-question-id="${q.id}">
+                                    <i class="fas fa-eye me-1"></i>Preview
+                                </button>
+                                <button class="btn btn-sm btn-success save-question" data-question-id="${q.id}">
+                                    <i class="fas fa-save me-1"></i>Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                questionsList.appendChild(questionCard);
+            });
+            
+            // Add event listeners to preview and save buttons
+            document.querySelectorAll('.preview-question').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const questionId = e.target.getAttribute('data-question-id') || 
+                                     e.target.closest('.preview-question').getAttribute('data-question-id');
+                    const question = questions.find(q => q.id === questionId);
+                    previewQuestion(question);
+                });
+            });
+            
+            document.querySelectorAll('.save-question').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const questionId = e.target.getAttribute('data-question-id') || 
+                                     e.target.closest('.save-question').getAttribute('data-question-id');
+                    const question = questions.find(q => q.id === questionId);
+                    saveQuestion(question);
+                });
+            });
+        }
+
+        function previewQuestion(question) {
+            const previewContent = document.getElementById('question-preview-content');
+            previewContent.innerHTML = `
+                <h5>${question.question}</h5>
+                <div class="mb-3">
+                    <p class="text-muted">Subject: ${question.subject} | Difficulty: ${question.difficulty} | Type: ${question.type}</p>
+                </div>
+                <div class="mb-4">
+                    <h6>Options:</h6>
+                    <div class="list-group">
+                        ${question.options.map((opt, i) => `
+                            <div class="list-group-item ${opt === question.correctAnswer ? 'list-group-item-success' : ''}">
+                                ${String.fromCharCode(65 + i)}. ${opt}
+                                ${opt === question.correctAnswer ? '<span class="badge bg-success float-end">Correct</span>' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6>Explanation:</h6>
+                        <p>${question.explanation}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Update save button to reference this question
+            saveQuestionBtn.setAttribute('data-question', JSON.stringify(question));
+            
+            // Show the modal
+            const previewModal = new bootstrap.Modal(document.getElementById('questionPreviewModal'));
+            previewModal.show();
+        }
+
+        function saveQuestion(question) {
+            if (!auth.currentUser) {
+                alert('Please login to save questions');
+                authModal.show();
+                return;
+            }
+            
+            // In a real app, you would save to Firestore here
+            // For this example, we'll just add it to the local question bank
+            
+            // Add to Firestore
+            db.collection('questions').add({
+                ...question,
+                userId: auth.currentUser.uid,
+                savedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                isSaved: true
+            })
+            .then(() => {
+                alert('Question saved successfully!');
+                loadUserQuestions(auth.currentUser.uid);
+            })
+            .catch(error => {
+                alert('Error saving question: ' + error.message);
+            });
+        }
+
+        function saveAllQuestions() {
+            if (!auth.currentUser) {
+                alert('Please login to save questions');
+                authModal.show();
+                return;
+            }
+            
+            // Get all generated questions
+            const questionCards = document.querySelectorAll('.question-card');
+            const questionsToSave = [];
+            
+            questionCards.forEach(card => {
+                const questionId = card.querySelector('.save-question').getAttribute('data-question-id');
+                // In a real app, you would get the full question data from your state management
+                // For this example, we'll just push the ID
+                questionsToSave.push(questionId);
+            });
+            
+            if (questionsToSave.length === 0) {
+                alert('No questions to save');
+                return;
+            }
+            
+            // In a real app, you would save all questions to Firestore here
+            // For this example, we'll just show a message
+            alert(`Saving ${questionsToSave.length} questions...`);
+            
+            // Reload user questions
+            loadUserQuestions(auth.currentUser.uid);
+        }
+
+        function loadUserQuestions(userId) {
+            if (!userId) return;
+            
+            db.collection('questions')
+                .where('userId', '==', userId)
+                .orderBy('savedAt', 'desc')
+                .get()
+                .then(querySnapshot => {
+                    questionBankContainer.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        emptyMessage.classList.remove('d-none');
+                        return;
+                    }
+                    
+                    emptyMessage.classList.add('d-none');
+                    
+                    querySnapshot.forEach(doc => {
+                        const question = doc.data();
+                        addQuestionToBank(question, doc.id);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading questions: ', error);
+                });
+        }
+
+        function addQuestionToBank(question, docId) {
+            const questionElement = document.createElement('div');
+            questionElement.className = 'col-md-6 mb-3';
+            questionElement.innerHTML = `
+                <div class="card question-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title">${question.subject}</h5>
+                            <span class="badge bg-${getDifficultyBadgeColor(question.difficulty)}">
+                                ${question.difficulty}
+                            </span>
+                        </div>
+                        <p class="card-text">${truncateText(question.question, 100)}</p>
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-sm btn-outline-primary preview-question" data-question-id="${docId}">
+                                <i class="fas fa-eye me-1"></i>View
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-question" data-question-id="${docId}">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            questionBankContainer.appendChild(questionElement);
+            
+            // Add event listeners
+            questionElement.querySelector('.preview-question').addEventListener('click', () => {
+                viewQuestionInBank(docId);
+            });
+            
+            questionElement.querySelector('.delete-question').addEventListener('click', () => {
+                deleteQuestion(docId);
+            });
+        }
+
+        function getDifficultyBadgeColor(difficulty) {
+            switch (difficulty) {
+                case 'easy': return 'success';
+                case 'medium': return 'warning';
+                case 'hard': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function truncateText(text, maxLength) {
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+
+        function viewQuestionInBank(questionId) {
+            db.collection('questions').doc(questionId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const question = doc.data();
+                        previewQuestion(question);
+                    } else {
+                        alert('Question not found');
+                    }
+                })
+                .catch(error => {
+                    alert('Error loading question: ' + error.message);
+                });
+        }
+
+        function deleteQuestion(questionId) {
+            if (confirm('Are you sure you want to delete this question?')) {
+                db.collection('questions').doc(questionId).delete()
+                    .then(() => {
+                        alert('Question deleted successfully');
+                        loadUserQuestions(auth.currentUser.uid);
+                    })
+                    .catch(error => {
+                        alert('Error deleting question: ' + error.message);
+                    });
+            }
+        }
+
+        function filterQuestions(filter) {
+            // In a real app, you would query Firestore with the filter
+            // For this example, we'll just show a message
+            alert(`Filtering questions by: ${filter}`);
+        }
+
+        // Admin functions
+        function loadAdminData() {
+            if (!auth.currentUser) return;
+            
+            // Check if user is admin
+            db.collection('users').doc(auth.currentUser.uid).get()
+                .then(doc => {
+                    if (doc.exists && doc.data().role === 'admin') {
+                        loadAdminQuestions();
+                        loadAdminUsers();
+                        loadAdminCategories();
+                        loadAdminAnalytics();
+                    }
+                });
+        }
+
+        function loadAdminQuestions() {
+            db.collection('questions')
+                .orderBy('savedAt', 'desc')
+                .limit(50)
+                .get()
+                .then(querySnapshot => {
+                    const tableBody = document.getElementById('admin-questions-table');
+                    tableBody.innerHTML = '';
+                    
+                    querySnapshot.forEach(doc => {
+                        const question = doc.data();
+                        const row = document.createElement('tr');
+                        
+                        row.innerHTML = `
+                            <td>${truncateText(question.question, 60)}</td>
+                            <td>${question.subject || 'N/A'}</td>
+                            <td><span class="badge bg-${getDifficultyBadgeColor(question.difficulty)}">${question.difficulty}</span></td>
+                            <td>${question.userId}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1 admin-view-question" data-id="${doc.id}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger admin-delete-question" data-id="${doc.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Add event listeners
+                    document.querySelectorAll('.admin-view-question').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const questionId = e.target.getAttribute('data-id') || 
+                                             e.target.closest('.admin-view-question').getAttribute('data-id');
+                            viewAdminQuestion(questionId);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.admin-delete-question').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const questionId = e.target.getAttribute('data-id') || 
+                                             e.target.closest('.admin-delete-question').getAttribute('data-id');
+                            deleteAdminQuestion(questionId);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading admin questions: ', error);
+                });
+        }
+
+        function viewAdminQuestion(questionId) {
+            db.collection('questions').doc(questionId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const question = doc.data();
+                        previewQuestion(question);
+                    }
+                });
+        }
+
+        function deleteAdminQuestion(questionId) {
+            if (confirm('Are you sure you want to delete this question?')) {
+                db.collection('questions').doc(questionId).delete()
+                    .then(() => {
+                        alert('Question deleted successfully');
+                        loadAdminQuestions();
+                    });
+            }
+        }
+
+        function loadAdminUsers() {
+            db.collection('users')
+                .orderBy('createdAt', 'desc')
+                .limit(50)
+                .get()
+                .then(querySnapshot => {
+                    const tableBody = document.getElementById('admin-users-table');
+                    tableBody.innerHTML = '';
+                    
+                    querySnapshot.forEach(doc => {
+                        const user = doc.data();
+                        const row = document.createElement('tr');
+                        
+                        row.innerHTML = `
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td><span class="badge bg-${user.role === 'admin' ? 'danger' : 'primary'}">${user.role}</span></td>
+                            <td>${user.createdAt?.toDate().toLocaleDateString() || 'N/A'}</td>
+                            <td>
+                                ${user.role !== 'admin' ? `
+                                <button class="btn btn-sm btn-outline-success me-1 make-admin-btn" data-id="${doc.id}">
+                                    Make Admin
+                                </button>
+                                ` : ''}
+                                <button class="btn btn-sm btn-outline-danger delete-user-btn" data-id="${doc.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Add event listeners
+                    document.querySelectorAll('.make-admin-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const userId = e.target.getAttribute('data-id') || 
+                                         e.target.closest('.make-admin-btn').getAttribute('data-id');
+                            makeUserAdmin(userId);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-user-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const userId = e.target.getAttribute('data-id') || 
+                                         e.target.closest('.delete-user-btn').getAttribute('data-id');
+                            deleteUser(userId);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading admin users: ', error);
+                });
+        }
+
+        function makeUserAdmin(userId) {
+            if (confirm('Are you sure you want to make this user an admin?')) {
+                db.collection('users').doc(userId).update({
+                    role: 'admin'
+                })
+                .then(() => {
+                    alert('User is now an admin');
+                    loadAdminUsers();
+                });
+            }
+        }
+
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user? This cannot be undone.')) {
+                // In a real app, you would also delete the user's auth record
+                // and any associated data
+                db.collection('users').doc(userId).delete()
+                    .then(() => {
+                        alert('User deleted successfully');
+                        loadAdminUsers();
+                    });
+            }
+        }
+
+        function loadAdminCategories() {
+            db.collection('categories')
+                .orderBy('name')
+                .get()
+                .then(querySnapshot => {
+                    const container = document.getElementById('categories-container');
+                    container.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        container.innerHTML = '<p>No categories found</p>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const category = doc.data();
+                        const card = document.createElement('div');
+                        card.className = 'col-md-4 mb-3';
+                        card.innerHTML = `
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">${category.name}</h5>
+                                    <p class="card-text text-muted">${category.description || 'No description'}</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-sm btn-outline-danger delete-category-btn" data-id="${doc.id}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        container.appendChild(card);
+                    });
+                    
+                    // Add event listeners
+                    document.querySelectorAll('.delete-category-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const categoryId = e.target.getAttribute('data-id') || 
+                                            e.target.closest('.delete-category-btn').getAttribute('data-id');
+                            deleteCategory(categoryId);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading categories: ', error);
+                });
+        }
+
+        function saveCategory() {
+            const name = document.getElementById('category-name').value;
+            const description = document.getElementById('category-description').value;
+            
+            if (!name) {
+                alert('Please enter a category name');
+                return;
+            }
+            
+            db.collection('categories').add({
+                name: name,
+                description: description,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                alert('Category saved successfully');
+                document.getElementById('addCategoryModal').querySelector('.btn-close').click();
+                document.getElementById('category-name').value = '';
+                document.getElementById('category-description').value = '';
+                loadAdminCategories();
+            })
+            .catch(error => {
+                alert('Error saving category: ' + error.message);
+            });
+        }
+
+        function deleteCategory(categoryId) {
+            if (confirm('Are you sure you want to delete this category?')) {
+                db.collection('categories').doc(categoryId).delete()
+                    .then(() => {
+                        alert('Category deleted successfully');
+                        loadAdminCategories();
+                    });
+            }
+        }
+
+        function loadAdminAnalytics() {
+            // In a real app, you would fetch actual analytics data from Firestore
+            // For this example, we'll use sample data
+            
+            // Questions by difficulty chart
+            const questionsCtx = document.getElementById('questionsChart').getContext('2d');
+            new Chart(questionsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Easy', 'Medium', 'Hard'],
+                    datasets: [{
+                        label: 'Questions by Difficulty',
+                        data: [12, 19, 8],
+                        backgroundColor: [
+                            '#28a745',
+                            '#ffc107',
+                            '#dc3545'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // User activity chart
+            const usersCtx = document.getElementById('usersChart').getContext('2d');
+            new Chart(usersCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'New Users',
+                        data: [5, 10, 8, 15, 12, 20],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        fill: true
+                    }, {
+                        label: 'Questions Generated',
+                        data: [20, 35, 25, 45, 40, 60],
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+
+        // Initialize save question button in preview modal
+        saveQuestionBtn.addEventListener('click', () => {
+            const questionData = saveQuestionBtn.getAttribute('data-question');
+            if (questionData) {
+                const question = JSON.parse(questionData);
+                saveQuestion(question);
+            }
+        });
+    </script>
+</body>
+</html>
